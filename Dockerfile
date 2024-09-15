@@ -1,5 +1,5 @@
-# Use the official Flowise image as the base
-FROM flowiseai/flowise:latest
+# Use the official Node image as the base
+FROM node:20-alpine
 
 # Set environment variables
 ENV PORT=3000
@@ -13,11 +13,36 @@ ENV SECRETKEY_PATH=/opt/flowise/.flowise
 ENV LOG_PATH=/opt/flowise/.flowise/logs
 ENV BLOB_STORAGE_PATH=/opt/flowise/.flowise/storage
 
-# Create necessary directories
-RUN mkdir -p /opt/flowise/.flowise/logs /opt/flowise/.flowise/storage
+# Install required dependencies
+RUN apk add --update libc6-compat python3 make g++ \
+    build-base cairo-dev pango-dev \
+    chromium && \
+    npm install -g pnpm
 
-# Set the working directory
-WORKDIR /usr/src/app
+# Set Puppeteer config
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Start Flowise
-CMD ["flowise", "start"]
+# Memory management
+ENV NODE_OPTIONS=--max-old-space-size=8192
+
+WORKDIR /usr/src
+
+# Copy dependency files first
+COPY pnpm-lock.yaml ./
+RUN pnpm install
+
+# Copy app source
+COPY . .
+
+# Build app
+RUN pnpm build
+
+# Expose port
+EXPOSE 3000
+
+# Start app
+CMD [ "pnpm", "start" ]
+
+# Optional: Add health check
+#HEALTHCHECK CMD curl --fail http://localhost:3000/health || exit 1
