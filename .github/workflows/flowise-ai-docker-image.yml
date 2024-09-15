@@ -1,0 +1,27 @@
+# Use the official Flowise image as the base
+FROM flowiseai/flowise:latest
+
+# Set environment variables
+# Remove the fixed PORT to allow Azure to set it via environment variables
+ENV HOST=0.0.0.0
+ENV FLOWISE_USERNAME=flowiseUserName
+ENV FLOWISE_PASSWORD=strongFlowisePassword
+ENV FLOWISE_SECRETKEY_OVERWRITE=longandStrongSecretKey
+ENV DATABASE_PATH=/opt/flowise/.flowise
+ENV APIKEY_PATH=/opt/flowise/.flowise
+ENV SECRETKEY_PATH=/opt/flowise/.flowise
+ENV LOG_PATH=/opt/flowise/.flowise/logs
+ENV BLOB_STORAGE_PATH=/opt/flowise/.flowise/storage
+
+# Create necessary directories
+RUN mkdir -p /opt/flowise/.flowise/logs /opt/flowise/.flowise/storage
+
+# Expose the port that Flowise will listen on
+# Azure typically uses the PORT environment variable; Flowise should be configured to use it
+EXPOSE 3000
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Start Flowise
+CMD ["flowise", "start"]
